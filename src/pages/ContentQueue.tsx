@@ -116,7 +116,7 @@ export function ContentQueue() {
     ...(cp as QueueItem[]).map(i => ({ ...i, source: 'comet_posts' as const })),
   ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
-  const pending = all.filter(i => ['ready', 'ready_to_publish', 'pending_approval'].includes(i.status))
+  const pending = all.filter(i => ['ready', 'ready_to_publish', 'pending_approval', 'human_required'].includes(i.status))
   const approved = all.filter(i => i.status === 'approved')
   const published = all.filter(i => i.status === 'published')
   const rejected = all.filter(i => ['rejected', 'dismissed'].includes(i.status))
