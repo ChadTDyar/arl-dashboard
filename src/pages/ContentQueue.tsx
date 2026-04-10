@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
-import { Check, X, Edit3, EyeOff, Send, Globe } from 'lucide-react'
+import { Check, X, Edit3, EyeOff, Send, Globe, CheckCheck, XCircle } from 'lucide-react'
 import { useState } from 'react'
 import { formatDistanceToNow } from 'date-fns'
 
@@ -129,7 +129,30 @@ export function ContentQueue() {
     rejected: rejected.length,
   }
 
+  const [bulkBusy, setBulkBusy] = useState('')
   const refetch = () => { refetchMq(); refetchCp() }
+
+  const bulkAction = async (action: 'approve' | 'reject', items: QueueItem[]) => {
+    setBulkBusy(action)
+    const fn = action === 'approve' ? approveItem : rejectItem
+    const results = { ok: 0, fail: 0 }
+    for (const item of items) {
+      try {
+        await fn(item.id, item.source)
+        results.ok++
+      } catch {
+        results.fail++
+      }
+    }
+    qc.invalidateQueries({ queryKey: ['marketing-queue'] })
+    qc.invalidateQueries({ queryKey: ['comet-posts'] })
+    refetch()
+    setBulkBusy('')
+  }
+
+  const qc = useQueryClient()
+  const nonLinkedinPending = pending.filter(i => (i.platform || i.channel || '').toLowerCase() !== 'linkedin')
+  const linkedinPending = pending.filter(i => (i.platform || i.channel || '').toLowerCase() === 'linkedin')
 
   return (
     <div className="space-y-6">
@@ -150,6 +173,25 @@ export function ContentQueue() {
         </TabsList>
         {Object.entries(lists).map(([key, items]) => (
           <TabsContent key={key} value={key} className="space-y-3 mt-4">
+            {key === 'pending' && items.length > 0 && (
+              <div className="flex items-center gap-2 pb-2 border-b border-border">
+                {nonLinkedinPending.length > 0 && (
+                  <Button size="sm" onClick={() => bulkAction('approve', nonLinkedinPending)} disabled={!!bulkBusy}>
+                    <CheckCheck className="w-3.5 h-3.5 mr-1" />
+                    {bulkBusy === 'approve' ? 'Approving...' : `Approve All Non-LinkedIn (${nonLinkedinPending.length})`}
+                  </Button>
+                )}
+                <Button size="sm" variant="destructive" onClick={() => bulkAction('reject', items)} disabled={!!bulkBusy}>
+                  <XCircle className="w-3.5 h-3.5 mr-1" />
+                  {bulkBusy === 'reject' ? 'Rejecting...' : `Reject All (${items.length})`}
+                </Button>
+                {linkedinPending.length > 0 && (
+                  <span className="text-[11px] text-blue-400 ml-auto">
+                    {linkedinPending.length} LinkedIn post{linkedinPending.length > 1 ? 's' : ''} require manual approval
+                  </span>
+                )}
+              </div>
+            )}
             {items.length === 0 && (
               <Card>
                 <CardContent className="py-8 text-center text-muted-foreground text-sm">
