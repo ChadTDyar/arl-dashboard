@@ -91,7 +91,7 @@ export function CommandCenter() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{isLoading ? '...' : overview?.subscribers || 0}</div>
+            <div className="text-3xl font-bold">{isLoading ? '...' : overview?.total_subscribers || 0}</div>
           </CardContent>
         </Card>
       </div>

@@ -35,7 +35,7 @@ export function Revenue() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{overview?.subscribers || 0}</div>
+            <div className="text-3xl font-bold">{overview?.total_subscribers || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -45,7 +45,7 @@ export function Revenue() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{overview?.active_subscriptions || 0}</div>
+            <div className="text-3xl font-bold">{overview?.subscription_count || 0}</div>
           </CardContent>
         </Card>
         <Card>
