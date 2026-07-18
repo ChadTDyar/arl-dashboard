@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ARL Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #222536;
+      --border: #2d3148;
+      --text: #e2e8f0;
+      --muted: #8892a4;
+      --accent: #6366f1;
+      --accent-muted: #2a2d50;
+      --green: #22c55e;
+      --green-bg: #0a2015;
+      --yellow: #f59e0b;
+      --yellow-bg: #221500;
+      --red: #ef4444;
+      --red-bg: #200808;
+      --blue: #3b82f6;
+      --blue-bg: #081020;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    #sidebar {
+      width: 216px;
+      min-width: 216px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar-brand {
+      padding: 18px 16px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-brand .logo { font-size: 17px; font-weight: 800; letter-spacing: -0.5px; }
+    .sidebar-brand .tagline { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .nav-section { padding: 6px 0; }
+    .nav-label {
+      font-size: 10px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.8px;
+      padding: 10px 16px 4px;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 9px 16px; color: var(--muted); cursor: pointer;
+      border-left: 3px solid transparent; transition: all 0.12s;
+      font-size: 13px;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: var(--accent-muted); color: var(--text); border-left-color: var(--accent); }
+    .nav-item svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+    .nav-badge {
+      margin-left: auto; background: var(--red); color: #fff;
+      font-size: 10px; font-weight: 800; padding: 1px 5px;
+      border-radius: 8px; min-width: 18px; text-align: center; display: none;
+    }
+
+    .sidebar-footer {
+      margin-top: auto; padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 11px; color: var(--muted);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+    /* ── Main ── */
+    #main { flex: 1; overflow-y: auto; padding: 24px 28px; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page-header { margin-bottom: 22px; }
+    .page-header h1 { font-size: 21px; font-weight: 700; }
+    .page-header p { color: var(--muted); margin-top: 3px; font-size: 13px; }
+
+    /* ── Stats ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px; margin-bottom: 22px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 14px 16px;
+    }
+    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
+    .stat-value { font-size: 26px; font-weight: 800; line-height: 1; }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Items ── */
+    .item-row {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 13px 15px;
+      margin-bottom: 7px; display: flex;
+      align-items: flex-start; gap: 12px;
+      transition: border-color 0.12s;
+    }
+    .item-row:hover { border-color: #3d4070; }
+    .item-main { flex: 1; min-width: 0; }
+    .item-title {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      margin-bottom: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .item-meta { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+    .item-preview {
+      font-size: 12.5px; color: #9aa5b8; line-height: 1.45;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .item-actions { display: flex; gap: 6px; margin-top: 9px; }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex; align-items: center;
+      padding: 2px 7px; border-radius: 4px;
+      font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+    }
+    .badge-green  { background: var(--green-bg);  color: var(--green);  border: 1px solid #0d3a1a; }
+    .badge-yellow { background: var(--yellow-bg); color: var(--yellow); border: 1px solid #3a2200; }
+    .badge-red    { background: var(--red-bg);    color: var(--red);    border: 1px solid #3a0a0a; }
+    .badge-blue   { background: var(--blue-bg);   color: var(--blue);   border: 1px solid #0a1830; }
+    .badge-muted  { background: var(--surface2);  color: var(--muted);  border: 1px solid var(--border); }
+    .badge-accent { background: var(--accent-muted); color: #a5b4fc;    border: 1px solid #3d4070; }
+
+    .platform-pill {
+      display: inline-flex; align-items: center;
+      padding: 1px 7px; border-radius: 3px; font-size: 10px; font-weight: 600;
+      background: var(--surface2); color: var(--muted); border: 1px solid var(--border);
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      padding: 5px 11px; border-radius: 5px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1px solid transparent; transition: all 0.12s;
+    }
+    .btn-approve { background: var(--green-bg); color: var(--green); border-color: #0d3a1a; }
+    .btn-approve:hover { background: #0a2a14; }
+    .btn-reject  { background: var(--red-bg);   color: var(--red);   border-color: #3a0a0a; }
+    .btn-reject:hover  { background: #2a0505; }
+
+    /* ── Tabs ── */
+    .tab-bar {
+      display: flex; gap: 2px; margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      padding: 7px 13px; font-size: 12.5px; font-weight: 500; color: var(--muted);
+      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Section header ── */
+    .section-header {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.6px;
+      margin: 20px 0 10px; padding-bottom: 7px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+
+    /* ── Alert ── */
+    .alert {
+      border-radius: 7px; padding: 11px 14px; margin-bottom: 10px;
+      display: flex; align-items: flex-start; gap: 9px; font-size: 13px;
+    }
+    .alert-yellow { background: var(--yellow-bg); border: 1px solid #3a2200; color: #f5c84b; }
+    .alert-red    { background: var(--red-bg);    border: 1px solid #3a0a0a; color: #f87171; }
+
+    /* ── Misc ── */
+    .loading { text-align: center; padding: 48px; color: var(--muted); font-size: 13px; }
+    .empty   { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+
+    .expand-btn {
+      font-size: 11px; color: var(--accent); cursor: pointer; margin-top: 5px;
+      display: inline-block; user-select: none;
+    }
+    .detail-body {
+      font-size: 12px; color: #9aa5b8; line-height: 1.55; margin-top: 7px;
+      padding: 9px 12px; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 5px; max-height: 180px; overflow-y: auto; display: none;
+    }
+    pre.detail-body { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 11px; }
+
+    .urgency-badge::before { content: '⚡ '; }
+
+    .app-row {
+      display: flex; align-items: center; padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .app-row:last-child { border-bottom: none; }
+    .app-name { flex: 1; font-weight: 600; font-size: 14px; }
+    .app-mrr  { font-size: 20px; font-weight: 800; color: var(--green); }
+    .app-sub  { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">ARL</div>
+    <div class="tagline">Autonomous Revenue Labs</div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Operations</div>
+    <div class="nav-item active" data-page="command" onclick="nav('command')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Command Center
+      <span class="nav-badge" id="b-attention">0</span>
+    </div>
+    <div class="nav-item" data-page="content" onclick="nav('content')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      Content Queue
+      <span class="nav-badge" id="b-content">0</span>
+    </div>
+    <div class="nav-item" data-page="engagement" onclick="nav('engagement')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      Inbox
+      <span class="nav-badge" id="b-engagement">0</span>
+    </div>
+    <div class="nav-item" data-page="outreach" onclick="nav('outreach')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+      Outreach
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">Revenue</div>
+    <div class="nav-item" data-page="portfolio" onclick="nav('portfolio')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      Portfolio
+    </div>
+    <div class="nav-item" data-page="revenue" onclick="nav('revenue')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Revenue
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-label">System</div>
+    <div class="nav-item" data-page="system" onclick="nav('system')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Automation Log
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="dot"></div>
+    System active
+    <span id="refresh-time" style="margin-left:auto;font-size:10px"></span>
+  </div>
+</nav>
+
+<main id="main">
+  <div id="page-command"    class="page active"><div class="page-header"><h1>Command Center</h1><p>What needs your attention today</p></div><div id="c-command"><div class="loading">Loading…</div></div></div>
+  <div id="page-content"    class="page"><div class="page-header"><h1>Content Queue</h1><p>Posts awaiting approval, scheduled, and published</p></div><div id="c-content"><div class="loading">Loading…</div></div></div>
+  <div id="page-engagement" class="page"><div class="page-header"><h1>Inbox</h1><p>Opportunities, replies, and flags from automated monitoring</p></div><div id="c-engagement"><div class="loading">Loading…</div></div></div>
+  <div id="page-outreach"   class="page"><div class="page-header"><h1>Outreach</h1><p>Campaign activity and follow-up tracker</p></div><div id="c-outreach"><div class="loading">Loading…</div></div></div>
+  <div id="page-portfolio"  class="page"><div class="page-header"><h1>Portfolio</h1><p>Books and apps — sorted by promotion need</p></div><div id="c-portfolio"><div class="loading">Loading…</div></div></div>
+  <div id="page-revenue"    class="page"><div class="page-header"><h1>Revenue</h1><p>MRR, subscriptions, and book royalties</p></div><div id="c-revenue"><div class="loading">Loading…</div></div></div>
+  <div id="page-system"     class="page"><div class="page-header"><h1>Automation Log</h1><p>Recent agent actions and system activity</p></div><div id="c-system"><div class="loading">Loading…</div></div></div>
+</main>
+
+<script>
+const SB   = 'https://skaeklayghuqwakrbemy.supabase.co';
+const KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNrYWVrbGF5Z2h1cXdha3JiZW15Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI4NzYyMDEsImV4cCI6MjA2ODQ1MjIwMX0.bnqUSXXEQJuQPEkOSoazNSlaKEIxcjGzgk1yKBxj2iQ';
+const HDR  = { 'Authorization': `Bearer ${KEY}`, 'apikey': KEY };
+const cache = {};
+
+async function q(table, params = '') {
+  const k = table + params;
+  if (cache[k]) return cache[k];
+  const r = await fetch(`${SB}/rest/v1/${table}${params}`, { headers: HDR });
+  const d = await r.json();
+  if (!Array.isArray(d)) throw new Error(JSON.stringify(d));
+  cache[k] = d;
+  return d;
+}
+
+function bust(...keys) { keys.forEach(k => { delete cache[k]; }); }
+
+async function patchRow(table, id, body) {
+  const r = await fetch(`${SB}/rest/v1/${table}?id=eq.${id}`, {
+    method: 'PATCH',
+    headers: { ...HDR, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+    body: JSON.stringify(body)
+  });
+  if (!r.ok) {
+    const msg = await r.text().catch(() => r.status);
+    throw new Error(`Save failed (${r.status}): ${msg}`);
+  }
+  return r;
+}
+
+/* ── Formatters ── */
+function ago(d) {
+  if (!d) return '—';
+  const ms = Date.now() - new Date(d);
+  const m = Math.floor(ms / 6e4), h = Math.floor(ms / 36e5), dy = Math.floor(ms / 864e5);
+  if (m < 60)  return m + 'm ago';
+  if (h < 24)  return h + 'h ago';
+  if (dy < 7)  return dy + 'd ago';
+  return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function money(n) {
+  if (!n) return '$0';
+  return '$' + parseFloat(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+const PLATFORMS = { devto:'Dev.to', medium:'Medium', linkedin:'LinkedIn', social:'Social',
+  pinterest:'Pinterest', mastodon:'Mastodon', substack:'Substack', gmail:'Gmail',
+  twitter:'Twitter', x:'X (Twitter)', quora:'Quora', indieHackers:'IndieHackers' };
+
+const AGENTS = {
+  'autonomy-gate-cron':'Autonomy Gate', 'outreach-autopilot-cron':'Outreach Autopilot',
+  'subscription_conversion_agent':'Conversion Agent', 'marketing_engine':'Marketing Engine',
+  'circuit-brain':'Circuit Brain', 'morning-digest':'Morning Digest' };
+
+const ACTIONS = {
+  content_publish:'Content Publish', outreach_followup:'Outreach Follow-up',
+  inactivity_flag:'Inactive User Flag', circuit_health:'Circuit Health', content_seed:'Content Seed' };
+
+const APP_NAMES = {
+  contentforge:'ContentForge', homegrown:'HomeGrown', momentum:'Momentum',
+  pawformance:'PawFormance', carecadence:'CareCadence', palettepro:'Palette Pro',
+  pique:'PIQUE' };
+
+function pill(p) { return `<span class="platform-pill">${PLATFORMS[p] || p || '?'}</span>`; }
+function agentL(a) { return AGENTS[a] || a; }
+function actionL(a) { return ACTIONS[a] || a; }
+
+function badge(status, type) {
+  const MAP = {
+    mq: {
+      pending: ['yellow','Needs Approval'], ready: ['yellow','Ready to Approve'],
+      human_required: ['yellow','Needs Approval'], approved: ['green','Approved'],
+      published: ['green','Published'], manual_publish: ['blue','Ready to Publish'],
+      ready_to_publish: ['blue','Queued'], rejected: ['muted','Rejected']
+    },
+    eng: {
+      notified: ['yellow','Action Needed'], draft_ready: ['blue','Draft Ready'],
+      responded: ['green','Responded'], human_required: ['red','Flagged']
+    },
+    comet: {
+      human_required: ['yellow','Needs Approval'], approved: ['green','Approved'],
+      published: ['green','Published']
+    },
+    outreach: {
+      sent: ['blue','Sent'], replied: ['green','Replied'],
+      follow_up: ['yellow','Follow-up Due'], bounced: ['red','Bounced']
+    },
+    result: {
+      no_action: ['muted','No Action'], success: ['green','Success'],
+      pending: ['yellow','Pending'], error: ['red','Error']
+    }
+  };
+  const [c, l] = MAP[type]?.[status] || ['muted', status || '—'];
+  return `<span class="badge badge-${c}">${l}</span>`;
+}
+
+function expandable(label, content, isPre = false) {
+  const id = 'e' + Math.random().toString(36).slice(2);
+  return `<span class="expand-btn" onclick="
+    var el=document.getElementById('${id}');
+    el.style.display=el.style.display==='block'?'none':'block';
+    this.textContent=el.style.display==='block'?'▾ Hide ${label}':'▸ ${label}';
+  ">▸ ${label}</span>
+  <${isPre ? 'pre' : 'div'} class="detail-body" id="${id}">${content}</${isPre ? 'pre' : 'div'}>`;
+}
+
+/* ── Navigation ── */
+let currentPage = '';
+const loaded = new Set();
+
+function nav(page) {
+  if (currentPage === page) return;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`).classList.add('active');
+  currentPage = page;
+  history.replaceState(null, '', '#' + page);
+  if (!loaded.has(page)) { loaded.add(page); render(page); }
+}
+
+async function render(page) {
+  const el = document.getElementById('c-' + page);
+  try { await PAGES[page](el); }
+  catch(e) { el.innerHTML = `<div class="alert alert-red">⚠ ${e.message}</div>`; }
+}
+
+/* ── Pages ── */
+const PAGES = {
+
+  async command(el) {
+    const [queue, eng, stripe, subs, actions, comet] = await Promise.all([
+      q('marketing_queue', '?order=created_at.desc&limit=100'),
+      q('engagement_events', '?order=created_at.desc&limit=50'),
+      q('stripe_revenue', '?order=synced_at.desc&limit=30'),
+      q('kit_subscribers', '?order=snapshot_date.desc&limit=1'),
+      q('auto_actions_log', '?order=created_at.desc&limit=6'),
+      q('comet_posts', '?status=eq.human_required&order=created_at.desc&limit=10'),
+    ]);
+
+    const mqNeeds = queue.filter(i => ['pending','ready'].includes(i.status));
+    const engNeeds = eng.filter(i => ['notified','human_required','draft_ready'].includes(i.status));
+    const totalAttn = mqNeeds.length + comet.length + engNeeds.length;
+
+    // Latest stripe per app
+    const byApp = {};
+    stripe.forEach(r => { if (!byApp[r.app_id] || r.synced_at > byApp[r.app_id].synced_at) byApp[r.app_id] = r; });
+    const totalMRR = Object.values(byApp).reduce((s,r) => s + (r.mrr||0), 0);
+    const subCount = subs[0]?.total_subscribers || 0;
+    const queued   = queue.filter(i => ['approved','manual_publish'].includes(i.status)).length;
+
+    // Set badges
+    setBadge('b-attention', totalAttn);
+    setBadge('b-content', mqNeeds.length + comet.length);
+    setBadge('b-engagement', engNeeds.length);
+
+    const highUrg = eng.filter(e => e.urgency === 'high' && e.status !== 'responded');
+    let html = `
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Needs Your Decision</div>
+          <div class="stat-value" style="color:${totalAttn > 0 ? 'var(--yellow)' : 'var(--green)'}">${totalAttn}</div>
+          <div class="stat-sub">items waiting</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Monthly Recurring Revenue</div>
+          <div class="stat-value" style="color:var(--green)">${money(totalMRR)}</div>
+          <div class="stat-sub">across ${Object.keys(byApp).length} apps</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Lab Notes Subscribers</div>
+          <div class="stat-value">${subCount}</div>
+          <div class="stat-sub">last sync</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Content Ready to Publish</div>
+          <div class="stat-value">${queued}</div>
+          <div class="stat-sub">approved or queued</div>
+        </div>
+      </div>`;
+
+    html += `
+      <div id="how-it-works" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:13px 16px;margin-bottom:18px">
+        <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleHelp()">
+          <span style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px">⚙ How This Works — Your 5-Minute Daily Routine</span>
+          <span id="help-toggle-icon" style="color:var(--muted);font-size:12px">▾ hide</span>
+        </div>
+        <div id="help-body" style="margin-top:11px;font-size:12.5px;color:#9aa5b8;line-height:1.6">
+          <p style="margin-bottom:8px">The engine runs automatically. Your job is to show up once a day and make the decisions only you can make.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px">
+              <div style="font-weight:700;color:var(--text);margin-bottom:4px">1. Content Queue</div>
+              <div>Posts the engine drafted are waiting for your approval. Hit <span style="color:var(--green)">✓ Approve</span> to let automation schedule and publish them, or <span style="color:var(--red)">✕ Reject</span> to kill them. That's it.</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px">
+              <div style="font-weight:700;color:var(--text);margin-bottom:4px">2. LinkedIn Tab</div>
+              <div>LinkedIn posts are <strong>never auto-published</strong>. The engine drafts them. You click <span style="color:var(--accent)">Copy Text</span>, paste into LinkedIn, and post yourself. Takes 60 seconds.</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px">
+              <div style="font-weight:700;color:var(--text);margin-bottom:4px">3. Inbox</div>
+              <div>Replies and engagement signals the engine flagged. If a draft response is ready, review it and reply. If it says "action needed," check the original thread.</div>
+            </div>
+            <div style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:10px">
+              <div style="font-weight:700;color:var(--text);margin-bottom:4px">4. Outreach</div>
+              <div>The engine sends up to 2 follow-up emails per day automatically (never on Fridays). You see the log here. No action needed unless something flags red.</div>
+            </div>
+          </div>
+          <div style="color:var(--muted);font-size:11.5px">Everything else — content batching, scheduling, book promotion rotation, circuit health — runs without you. The morning digest email summarizes overnight activity so you never need to check this dashboard unless you want to act on something.</div>
+        </div>
+      </div>`;
+
+    if (highUrg.length) {
+      html += `<div class="section-header" style="color:var(--red)">🔴 Act Now — High Priority</div>`;
+      highUrg.forEach(e => { html += engItem(e); });
+    }
+
+    const attnItems = [...mqNeeds.slice(0,3), ...comet.slice(0,3)];
+    if (attnItems.length) {
+      html += `<div class="section-header">Content Awaiting Approval <span style="font-weight:400">${mqNeeds.length + comet.length} items</span></div>`;
+      attnItems.forEach(item => {
+        const isComet = 'content_summary' in item;
+        const title = isComet ? (item.content_summary||'').slice(0,90) + '…' : item.title;
+        html += `<div class="item-row">
+          <div class="item-main">
+            <div class="item-title">${esc(title)}</div>
+            <div class="item-meta">${pill(item.platform)} · ${ago(item.created_at)}</div>
+          </div>
+          ${badge('human_required','mq')}
+        </div>`;
+      });
+      if (mqNeeds.length + comet.length > 6) {
+        html += `<div class="empty" style="padding:10px;cursor:pointer;color:var(--accent)" onclick="nav('content')">See all ${mqNeeds.length + comet.length} items in Content Queue →</div>`;
+      }
+    }
+
+    html += `<div class="section-header">Recent Automation Activity</div>`;
+    actions.forEach(a => {
+      html += `<div class="item-row">
+        <div class="item-main">
+          <div class="item-title">${actionL(a.action_type)}</div>
+          <div class="item-meta">${agentL(a.agent)} · ${ago(a.created_at)}</div>
+          <div class="item-preview">${esc(a.description||'')}</div>
+        </div>
+        ${badge(a.result,'result')}
+      </div>`;
+    });
+
+    el.innerHTML = html;
+  },
+
+  async content(el) {
+    const [queue, comet] = await Promise.all([
+      q('marketing_queue', '?order=created_at.desc&limit=80'),
+      q('comet_posts', '?order=created_at.desc&limit=40'),
+    ]);
+
+    const needsMQ    = queue.filter(i => ['pending','ready'].includes(i.status));
+    const needsComet = comet.filter(i => i.status === 'human_required');
+    const scheduled  = queue.filter(i => ['approved','manual_publish'].includes(i.status));
+    const published  = queue.filter(i => i.status === 'published');
+    const manual     = queue.filter(i => i.status === 'manual_publish');
+
+    let html = `
+      <div class="tab-bar">
+        <div class="tab active" onclick="st('content','approval')">Needs Approval ${cntBadge(needsMQ.length + needsComet.length,'yellow')}</div>
+        <div class="tab" onclick="st('content','scheduled')">Scheduled ${cntBadge(scheduled.length + manual.length,'blue')}</div>
+        <div class="tab" onclick="st('content','published')">Published</div>
+        <div class="tab" onclick="st('content','linkedin')">LinkedIn ${cntBadge(comet.length,'muted')}</div>
+      </div>`;
+
+    // Approval
+    html += `<div id="tp-content-approval" class="tab-panel active">`;
+    if (!needsMQ.length && !needsComet.length) {
+      html += `<div class="empty">✓ Nothing waiting for approval</div>`;
+    } else {
+      [...needsMQ, ...needsComet].forEach(item => {
+        const isComet = 'content_summary' in item;
+        const tbl = isComet ? 'comet_posts' : 'marketing_queue';
+        const title = isComet ? (item.content_summary||'').slice(0,100)+'…' : item.title;
+        const body  = isComet ? item.content_summary : item.body;
+        html += `<div class="item-row" id="ir-${item.id}">
+          <div class="item-main">
+            <div class="item-title">${esc(title||'Untitled')}</div>
+            <div class="item-meta">
+              ${pill(item.platform)}
+              ${item.week_of ? ' · Week of ' + item.week_of : ''}
+              ${item.day_of_week ? ' · ' + cap(item.day_of_week) : ''}
+              · ${ago(item.created_at)}
+            </div>
+            ${body ? expandable('Read full content', esc(body)) : ''}
+            ${item.notes ? `<div class="item-meta" style="margin-top:5px;font-style:italic">Note: ${esc(item.notes)}</div>` : ''}
+            <div class="item-actions">
+              <button class="btn btn-approve" onclick="approve('${item.id}','${tbl}')">✓ Approve</button>
+              <button class="btn btn-reject"  onclick="reject('${item.id}','${tbl}')">✕ Reject</button>
+            </div>
+          </div>
+        </div>`;
+      });
+    }
+    html += `</div>`;
+
+    // Scheduled
+    html += `<div id="tp-content-scheduled" class="tab-panel">`;
+    const schAll = [...scheduled, ...manual].sort((a,b) => (a.week_of||'') < (b.week_of||'') ? -1 : 1);
+    schAll.forEach(item => {
+      html += `<div class="item-row">
+        <div class="item-main">
+          <div class="item-title">${esc(item.title||'Untitled')}</div>
+          <div class="item-meta">${pill(item.platform)} · ${item.week_of||''} ${item.day_of_week ? '· ' + cap(item.day_of_week) : ''}</div>
+          ${item.body ? expandable('Read content', esc(item.body)) : ''}
+        </div>
+        ${badge(item.status,'mq')}
+      </div>`;
+    });
+    if (!schAll.length) html += `<div class="empty">No content currently scheduled</div>`;
+    html += `</div>`;
+
+    // Published
+    html += `<div id="tp-content-published" class="tab-panel">`;
+    published.forEach(item => {
+      html += `<div class="item-row">
+        <div class="item-main">
+          <div class="item-title">${esc(item.title||'Untitled')}</div>
+          <div class="item-meta">${pill(item.platform)} · Published ${ago(item.published_at)}</div>
+          ${item.notes ? `<div class="item-meta" style="margin-top:3px">${esc(item.notes)}</div>` : ''}
+        </div>
+        ${badge('published','mq')}
+      </div>`;
+    });
+    if (!published.length) html += `<div class="empty">No published content logged yet</div>`;
+    html += `</div>`;
+
+    // LinkedIn — Chad always publishes manually. No auto-publish ever.
+    html += `<div id="tp-content-linkedin" class="tab-panel">
+      <div class="alert alert-yellow" style="margin-bottom:14px">
+        <span>📋</span>
+        <div><strong>LinkedIn is always manual.</strong> The engine drafts posts; you publish them yourself. Copy the text below, paste into LinkedIn, post it, then click "Mark Published" here to log it.</div>
+      </div>`;
+    comet.forEach(item => {
+      const rawText = (item.content_summary || '').replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+      html += `<div class="item-row" id="ir-${item.id}">
+        <div class="item-main">
+          <div class="item-preview" style="-webkit-line-clamp:unset;max-height:none;white-space:pre-wrap">${esc(item.content_summary||'')}</div>
+          <div class="item-meta" style="margin-top:8px">
+            ${ago(item.created_at)}
+            ${item.published_url ? ` · <a href="${item.published_url}" target="_blank" style="color:var(--accent)">View live post →</a>` : ''}
+          </div>
+          ${item.status === 'human_required' ? `
+          <div class="item-actions">
+            <button class="btn btn-approve" onclick="copyAndMark('${item.id}',${JSON.stringify(rawText)})">📋 Copy Text + Mark Reviewed</button>
+            <button class="btn btn-reject"  onclick="reject('${item.id}','comet_posts')">✕ Reject</button>
+          </div>` : ''}
+        </div>
+        ${badge(item.status,'comet')}
+      </div>`;
+    });
+    if (!comet.length) html += `<div class="empty">No LinkedIn posts drafted yet</div>`;
+    html += `</div>`;
+
+    el.innerHTML = html;
+  },
+
+  async engagement(el) {
+    const events = await q('engagement_events', '?order=created_at.desc&limit=60');
+    const action    = events.filter(e => ['notified','human_required'].includes(e.status));
+    const drafts    = events.filter(e => e.status === 'draft_ready');
+    const responded = events.filter(e => e.status === 'responded');
+
+    let html = `
+      <div class="tab-bar">
+        <div class="tab active" onclick="st('engagement','action')">Action Needed ${cntBadge(action.length,'yellow')}</div>
+        <div class="tab" onclick="st('engagement','drafts')">Draft Ready ${cntBadge(drafts.length,'blue')}</div>
+        <div class="tab" onclick="st('engagement','done')">Responded ${cntBadge(responded.length,'muted')}</div>
+      </div>`;
+
+    html += `<div id="tp-engagement-action" class="tab-panel active">`;
+    action.forEach(e => { html += engItem(e); });
+    if (!action.length) html += `<div class="empty">✓ No items requiring action</div>`;
+    html += `</div>`;
+
+    html += `<div id="tp-engagement-drafts" class="tab-panel">`;
+    drafts.forEach(e => { html += engItem(e); });
+    if (!drafts.length) html += `<div class="empty">No drafts ready</div>`;
+    html += `</div>`;
+
+    html += `<div id="tp-engagement-done" class="tab-panel">`;
+    responded.forEach(e => { html += engItem(e); });
+    if (!responded.length) html += `<div class="empty">No responded items</div>`;
+    html += `</div>`;
+
+    el.innerHTML = html;
+  },
+
+  async outreach(el) {
+    const rows = await q('outreach_log', '?order=created_at.desc&limit=80');
+    const sent    = rows.filter(r => r.status === 'sent');
+    const replied = rows.filter(r => r.status === 'replied');
+    const rate    = rows.length ? Math.round(replied.length / rows.length * 100) : 0;
+
+    let html = `
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Total Sent</div><div class="stat-value">${rows.length}</div><div class="stat-sub">outreach emails</div></div>
+        <div class="stat-card"><div class="stat-label">Replies Received</div><div class="stat-value" style="color:var(--green)">${replied.length}</div><div class="stat-sub">${rate}% reply rate</div></div>
+        <div class="stat-card"><div class="stat-label">Awaiting Reply</div><div class="stat-value">${sent.length}</div><div class="stat-sub">no response yet</div></div>
+      </div>
+      <div class="tab-bar">
+        <div class="tab active" onclick="st('outreach','all')">All (${rows.length})</div>
+        <div class="tab" onclick="st('outreach','replied')">Replies (${replied.length})</div>
+      </div>`;
+
+    function outRow(r) {
+      return `<div class="item-row">
+        <div class="item-main">
+          <div class="item-title">${esc(r.subject||'No subject')}</div>
+          <div class="item-meta">
+            To: <strong>${esc(r.recipient_name||'Unknown')}</strong>
+            ${r.recipient_org ? ` · ${esc(r.recipient_org)}` : ''}
+            · ${ago(r.sent_at || r.created_at)}
+          </div>
+          ${r.body_preview ? `<div class="item-preview">${esc(r.body_preview.slice(0,200))}</div>` : ''}
+          ${r.notes ? `<div class="item-meta" style="margin-top:4px;font-style:italic">${esc(r.notes)}</div>` : ''}
+        </div>
+        ${badge(r.status,'outreach')}
+      </div>`;
+    }
+
+    html += `<div id="tp-outreach-all" class="tab-panel active">`;
+    rows.forEach(r => { html += outRow(r); });
+    if (!rows.length) html += `<div class="empty">No outreach sent yet</div>`;
+    html += `</div>`;
+
+    html += `<div id="tp-outreach-replied" class="tab-panel">`;
+    replied.forEach(r => { html += outRow(r); });
+    if (!replied.length) html += `<div class="empty">No replies yet</div>`;
+    html += `</div>`;
+
+    el.innerHTML = html;
+  },
+
+  async portfolio(el) {
+    const items = await q('portfolio_items', '?active=eq.true&order=promotion_count.asc');
+    const books = items.filter(i => i.type === 'book');
+    const apps  = items.filter(i => i.type === 'app');
+
+    function portItem(item) {
+      const never   = !item.last_promoted_at;
+      const daysSince = item.last_promoted_at ? Math.floor((Date.now() - new Date(item.last_promoted_at)) / 864e5) : null;
+      let urgBadge = never
+        ? `<span class="badge badge-yellow">Never Promoted</span>`
+        : daysSince > 30
+          ? `<span class="badge badge-yellow">${daysSince}d since promo</span>`
+          : `<span class="badge badge-green">${daysSince}d ago</span>`;
+
+      return `<div class="item-row">
+        <div class="item-main">
+          <div class="item-title">${esc(item.name)}</div>
+          <div class="item-meta">
+            ${item.category ? `<span class="badge badge-muted" style="margin-right:5px">${item.category}</span>` : ''}
+            Promoted ${item.promotion_count||0} time${item.promotion_count!==1?'s':''}
+            ${item.subscription_mrr_decimal ? ` · MRR: ${money(item.subscription_mrr_decimal)}` : ''}
+          </div>
+          ${item.description ? `<div class="item-preview" style="-webkit-line-clamp:1">${esc(item.description)}</div>` : ''}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;min-width:110px">
+          ${urgBadge}
+          <div style="display:flex;gap:8px;margin-top:2px">
+            ${item.amazon_url ? `<a href="${item.amazon_url}" target="_blank" style="color:var(--accent);font-size:11px">Amazon →</a>` : ''}
+            ${item.url ? `<a href="${item.url}" target="_blank" style="color:var(--accent);font-size:11px">Details →</a>` : ''}
+          </div>
+        </div>
+      </div>`;
+    }
+
+    let html = `
+      <div class="tab-bar">
+        <div class="tab active" onclick="st('portfolio','books')">Books (${books.length})</div>
+        <div class="tab" onclick="st('portfolio','apps')">Apps (${apps.length})</div>
+      </div>
+      <div id="tp-portfolio-books" class="tab-panel active">`;
+    books.forEach(b => { html += portItem(b); });
+    if (!books.length) html += `<div class="empty">No books in portfolio</div>`;
+    html += `</div><div id="tp-portfolio-apps" class="tab-panel">`;
+    apps.forEach(a => { html += portItem(a); });
+    if (!apps.length) html += `<div class="empty">No apps in portfolio</div>`;
+    html += `</div>`;
+
+    el.innerHTML = html;
+  },
+
+  async revenue(el) {
+    const [stripe, books] = await Promise.all([
+      q('stripe_revenue', '?order=synced_at.desc&limit=60'),
+      q('book_sales', '?order=report_month.desc&limit=200'),
+    ]);
+
+    const byApp = {};
+    stripe.forEach(r => { if (!byApp[r.app_id] || r.synced_at > byApp[r.app_id].synced_at) byApp[r.app_id] = r; });
+    const appRows  = Object.values(byApp).sort((a,b) => (b.mrr||0) - (a.mrr||0));
+    const totalMRR = appRows.reduce((s,r) => s+(r.mrr||0), 0);
+
+    const byBook = {};
+    books.forEach(b => {
+      if (!byBook[b.title]) byBook[b.title] = { title: b.title, units: 0, royalties: 0 };
+      byBook[b.title].units    += b.units_sold    || 0;
+      byBook[b.title].royalties += b.royalties_usd || 0;
+    });
+    const bookRows   = Object.values(byBook).sort((a,b) => b.royalties - a.royalties);
+    const totalRoy   = bookRows.reduce((s,b) => s+b.royalties, 0);
+    const totalUnits = bookRows.reduce((s,b) => s+b.units, 0);
+
+    let html = `
+      <div class="stat-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total MRR</div>
+          <div class="stat-value" style="color:var(--green)">${money(totalMRR)}</div>
+          <div class="stat-sub">across ${appRows.length} apps</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Book Royalties (All Time)</div>
+          <div class="stat-value">${money(totalRoy)}</div>
+          <div class="stat-sub">${totalUnits} units sold</div>
+        </div>
+      </div>
+
+      <div class="section-header">App Revenue</div>
+      <div class="card">`;
+
+    appRows.forEach(r => {
+      html += `<div class="app-row">
+        <div class="app-name">${APP_NAMES[r.app_id] || r.app_id}</div>
+        <div style="text-align:right">
+          <div class="app-mrr">${money(r.mrr)}<span style="font-size:12px;color:var(--muted)">/mo</span></div>
+          <div class="app-sub">${r.subscription_count||0} subscriber${r.subscription_count!==1?'s':''}</div>
+        </div>
+      </div>`;
+    });
+    if (!appRows.length) html += `<div class="empty" style="padding:20px">No Stripe data synced yet</div>`;
+    html += `</div>`;
+
+    html += `<div class="section-header">Book Royalties by Title</div>`;
+    bookRows.forEach(b => {
+      html += `<div class="item-row">
+        <div class="item-main">
+          <div class="item-title">${esc(b.title)}</div>
+          <div class="item-meta">${b.units} unit${b.units!==1?'s':''} sold</div>
+        </div>
+        <div style="font-size:18px;font-weight:800;color:${b.royalties>0?'var(--green)':'var(--muted)'}">${money(b.royalties)}</div>
+      </div>`;
+    });
+    if (!bookRows.length) html += `<div class="empty">No book sales data yet</div>`;
+
+    el.innerHTML = html;
+  },
+
+  async system(el) {
+    const rows = await q('auto_actions_log', '?order=created_at.desc&limit=60');
+    const today = rows.filter(r => new Date(r.created_at).toDateString() === new Date().toDateString());
+    const successRate = rows.length ? Math.round(rows.filter(r => r.result==='success').length / rows.length * 100) : 0;
+
+    let html = `
+      <div class="stat-grid">
+        <div class="stat-card"><div class="stat-label">Actions Today</div><div class="stat-value">${today.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Success Rate</div><div class="stat-value">${successRate}%</div><div class="stat-sub">last ${rows.length} actions</div></div>
+      </div>
+      <div class="section-header">Automation History</div>`;
+
+    rows.forEach(a => {
+      const details = a.details ? JSON.stringify(a.details, null, 2) : null;
+      html += `<div class="item-row">
+        <div class="item-main">
+          <div class="item-title">${actionL(a.action_type)}</div>
+          <div class="item-meta">${agentL(a.agent)} · ${ago(a.created_at)}</div>
+          <div class="item-preview">${esc(a.description||'')}</div>
+          ${details ? expandable('View details', esc(details), true) : ''}
+        </div>
+        ${badge(a.result,'result')}
+      </div>`;
+    });
+    if (!rows.length) html += `<div class="empty">No automation activity logged yet</div>`;
+
+    el.innerHTML = html;
+  }
+};
+
+/* ── Shared render helpers ── */
+function engItem(e) {
+  return `<div class="item-row">
+    <div class="item-main">
+      <div class="item-title ${e.urgency==='high'?'urgency-badge':''}">${esc(e.subject||'No subject')}</div>
+      <div class="item-meta">
+        ${e.sender_name ? `<strong>${esc(e.sender_name)}</strong>` : ''}
+        ${e.sender_email ? ` &lt;${esc(e.sender_email)}&gt;` : ''}
+        · ${pill(e.platform)} · ${ago(e.created_at)}
+        ${e.urgency==='high' ? `<span class="badge badge-red" style="margin-left:6px">High Priority</span>` : ''}
+      </div>
+      ${e.body_preview ? `<div class="item-preview">${esc(e.body_preview)}</div>` : ''}
+      ${e.response_draft ? expandable('View response draft', esc(e.response_draft)) : ''}
+    </div>
+    ${badge(e.status,'eng')}
+  </div>`;
+}
+
+/* ── Tab switcher (scoped to page) ── */
+function st(page, tab) {
+  const el = document.getElementById('c-' + page);
+  el.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  el.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  const tabEl = el.querySelector(`[onclick="st('${page}','${tab}')"]`);
+  if (tabEl) tabEl.classList.add('active');
+  const panel = document.getElementById(`tp-${page}-${tab}`);
+  if (panel) panel.classList.add('active');
+}
+
+/* ── Approve / Reject ── */
+async function approve(id, tbl) {
+  const el = document.getElementById('ir-' + id);
+  if (el) { el.style.opacity = '0.4'; el.style.pointerEvents = 'none'; }
+  try {
+    await patchRow(tbl, id, { status: 'approved' });
+    if (el) el.innerHTML = `<div class="item-main"><div class="item-title" style="color:var(--green)">✓ Approved — automation will schedule this</div></div>`;
+    bust('marketing_queue?order=created_at.desc&limit=80', 'comet_posts?order=created_at.desc&limit=40', 'comet_posts?status=eq.human_required&order=created_at.desc&limit=10');
+  } catch(e) {
+    if (el) { el.style.opacity = '1'; el.style.pointerEvents = ''; }
+    alert('Approve failed: ' + e.message);
+  }
+}
+
+async function reject(id, tbl) {
+  const el = document.getElementById('ir-' + id);
+  if (el) { el.style.opacity = '0.4'; el.style.pointerEvents = 'none'; }
+  try {
+    await patchRow(tbl, id, { status: 'rejected' });
+    if (el) el.innerHTML = `<div class="item-main"><div class="item-title" style="color:var(--muted)">✕ Rejected — removed from queue</div></div>`;
+    bust('marketing_queue?order=created_at.desc&limit=80', 'comet_posts?order=created_at.desc&limit=40', 'comet_posts?status=eq.human_required&order=created_at.desc&limit=10');
+  } catch(e) {
+    if (el) { el.style.opacity = '1'; el.style.pointerEvents = ''; }
+    alert('Reject failed: ' + e.message);
+  }
+}
+
+async function copyAndMark(id, text) {
+  try {
+    await navigator.clipboard.writeText(text);
+  } catch(e) {
+    // fallback: select a textarea
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  }
+  await markLinkedInReviewed(id);
+}
+
+async function markLinkedInReviewed(id) {
+  const el = document.getElementById('ir-' + id);
+  if (el) { el.style.opacity = '0.4'; el.style.pointerEvents = 'none'; }
+  try {
+    await patchRow('comet_posts', id, { status: 'approved' });
+    if (el) el.innerHTML = `<div class="item-main"><div class="item-title" style="color:var(--green)">✓ Marked reviewed — publish this yourself on LinkedIn</div></div>`;
+    bust('comet_posts?order=created_at.desc&limit=40', 'comet_posts?status=eq.human_required&order=created_at.desc&limit=10');
+  } catch(e) {
+    if (el) { el.style.opacity = '1'; el.style.pointerEvents = ''; }
+    alert('Failed: ' + e.message);
+  }
+}
+
+/* ── Misc helpers ── */
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+function cntBadge(n, cls) {
+  if (!n) return '';
+  return `<span class="badge badge-${cls}" style="font-size:10px">${n}</span>`;
+}
+function setBadge(id, n) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = n;
+  el.style.display = n > 0 ? 'inline' : 'none';
+}
+
+/* ── Help panel toggle ── */
+function toggleHelp() {
+  const body = document.getElementById('help-body');
+  const icon = document.getElementById('help-toggle-icon');
+  if (!body) return;
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  if (icon) icon.textContent = hidden ? '▾ hide' : '▸ show';
+}
+
+/* ── Init ── */
+(function init() {
+  const page = (location.hash.replace('#','') || 'command');
+  nav(page.match(/^(command|content|engagement|outreach|portfolio|revenue|system)$/) ? page : 'command');
+  document.getElementById('refresh-time').textContent = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  window.addEventListener('hashchange', () => {
+    const p = location.hash.replace('#','');
+    if (p && p !== currentPage) nav(p);
+  });
+  // Refresh command center every 5 min
+  setInterval(() => {
+    if (currentPage === 'command') {
+      Object.keys(cache).forEach(k => delete cache[k]);
+      loaded.delete('command');
+      render('command');
+    }
+  }, 300000);
+})();
+</script>
+</body>
+</html>
