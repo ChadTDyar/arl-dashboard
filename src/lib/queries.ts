@@ -157,14 +157,8 @@ export function useAppDashboard() {
   return useQuery({
     queryKey: ['app-dashboard'],
     queryFn: async () => {
-      const url = import.meta.env.VITE_SUPABASE_URL
-      const key = import.meta.env.VITE_SUPABASE_ANON_KEY
-      const res = await fetch(`${url}/functions/v1/dashboard-snapshot?section=apps`, {
-        headers: { Authorization: `Bearer ${key}` },
-      })
-      if (!res.ok) throw new Error(`App dashboard: ${res.status}`)
-      const json = await res.json()
-      return json.apps || []
+      const { data } = await supabase.from('v_app_dashboard').select('*').order('mrr', { ascending: false })
+      return data || []
     },
     refetchInterval: 60000,
   })
