@@ -147,13 +147,13 @@ export function Revenue() {
               <p className="text-sm text-muted-foreground">No subscriber data</p>
             ) : (
               <div className="space-y-2">
-                {subscribers.map((s: { id: string; total_subscribers?: number; new_subscribers?: number; synced_at: string }) => (
+                {subscribers.map((s: { id: string; total_subscribers?: number; new_today?: number; snapshot_date: string }) => (
                   <div key={s.id} className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">{s.synced_at?.slice(0, 10)}</span>
+                    <span className="text-muted-foreground">{s.snapshot_date}</span>
                     <div className="flex items-center gap-3">
                       <span className="font-mono">{s.total_subscribers || 0} total</span>
-                      {s.new_subscribers != null && s.new_subscribers > 0 && (
-                        <Badge variant="secondary" className="text-[10px]">+{s.new_subscribers}</Badge>
+                      {s.new_today != null && s.new_today > 0 && (
+                        <Badge variant="secondary" className="text-[10px]">+{s.new_today}</Badge>
                       )}
                     </div>
                   </div>
@@ -176,7 +176,7 @@ export function Revenue() {
             <p className="text-sm text-muted-foreground">No book sales data</p>
           ) : (
             <div className="space-y-2">
-              {bookSales.slice(0, 15).map((b: { id: string; title?: string; units_sold?: number; revenue?: number; report_month: string }) => (
+              {bookSales.slice(0, 15).map((b: { id: string; title?: string; units_sold?: number; royalties_usd?: number; report_month: string }) => (
                 <div key={b.id} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className="truncate">{b.title || '—'}</span>
@@ -184,7 +184,7 @@ export function Revenue() {
                   </div>
                   <div className="flex items-center gap-3 shrink-0">
                     {b.units_sold != null && <span className="text-muted-foreground font-mono text-xs">{b.units_sold} units</span>}
-                    {b.revenue != null && <span className="font-mono text-green-400">${b.revenue.toFixed(2)}</span>}
+                    {b.royalties_usd != null && <span className="font-mono text-green-400">${b.royalties_usd.toFixed(2)}</span>}
                   </div>
                 </div>
               ))}

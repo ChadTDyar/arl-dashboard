@@ -116,7 +116,7 @@ export function useKitSubscribers() {
   return useQuery({
     queryKey: ['kit-subscribers'],
     queryFn: async () => {
-      const { data } = await supabase.from('kit_subscribers').select('*').order('synced_at', { ascending: false }).limit(10)
+      const { data } = await supabase.from('kit_subscribers').select('*').order('snapshot_date', { ascending: false }).limit(10)
       return data || []
     },
   })
