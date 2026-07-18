@@ -1,13 +1,14 @@
-import { useStripeRevenue, useKitSubscribers, useBookSales, useOverview } from '@/lib/queries'
+import { useStripeRevenue, useKitSubscribers, useBookSales, useOverview, useAppDashboard } from '@/lib/queries'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { DollarSign, Users, BookOpen, TrendingUp } from 'lucide-react'
+import { DollarSign, Users, BookOpen, TrendingUp, Smartphone } from 'lucide-react'
 
 export function Revenue() {
   const { data: overview } = useOverview()
   const { data: revenue = [] } = useStripeRevenue()
   const { data: subscribers = [] } = useKitSubscribers()
   const { data: bookSales = [] } = useBookSales()
+  const { data: apps = [] } = useAppDashboard()
 
   return (
     <div className="space-y-6">
@@ -58,6 +59,52 @@ export function Revenue() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Per-App Funnel */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <Smartphone className="w-4 h-4" /> Apps
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {apps.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No app data</p>
+          ) : (
+            <div className="space-y-0">
+              <div className="grid grid-cols-6 gap-2 text-[11px] text-muted-foreground font-medium pb-2 border-b border-border">
+                <span className="col-span-1">App</span>
+                <span className="text-right">Total Users</span>
+                <span className="text-right">Paid</span>
+                <span className="text-right">Free</span>
+                <span className="text-right">Conv %</span>
+                <span className="text-right">MRR</span>
+              </div>
+              {(apps as Array<{ app_id: string; app_name: string; total_users: number; paid_users: number; mrr: number; conversion_rate: number; new_signups: number }>)
+                .sort((a, b) => b.mrr - a.mrr || b.total_users - a.total_users)
+                .map((app) => (
+                <div key={app.app_id} className="grid grid-cols-6 gap-2 text-sm py-1.5 border-b border-border/50 last:border-0">
+                  <span className="col-span-1 truncate font-medium">{app.app_name}</span>
+                  <span className="text-right font-mono">
+                    {app.total_users}
+                    {app.new_signups > 0 && (
+                      <Badge variant="secondary" className="text-[9px] ml-1 px-1">+{app.new_signups}</Badge>
+                    )}
+                  </span>
+                  <span className="text-right font-mono">{app.paid_users}</span>
+                  <span className="text-right font-mono text-muted-foreground">{app.total_users - app.paid_users}</span>
+                  <span className={`text-right font-mono ${app.conversion_rate > 0 ? 'text-blue-400' : 'text-muted-foreground'}`}>
+                    {app.conversion_rate.toFixed(1)}%
+                  </span>
+                  <span className={`text-right font-mono ${app.mrr > 0 ? 'text-green-400' : 'text-muted-foreground'}`}>
+                    ${app.mrr.toFixed(2)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Stripe Revenue History */}
